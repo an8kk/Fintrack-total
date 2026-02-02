@@ -26,9 +26,10 @@ Command line:
 mvn clean spring-boot:run
 
 3. API Endpoints
+
 | Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| POST | /api/auth/register | Create a new account |
-| POST | /api/auth/login | Receive a JWT token |
-| GET | /api/transactions/{id} | Fetch user transactions |
-| PUT | /api/users/{id} | Update profile details |
+| :---         |     :---:      |          ---: |
+| POST   | /api/auth/register     | Create a new account    |
+| POST     | /api/auth/login       | Receieve a JWT Token      |
+| GET   | /api/transactions/{id}     | Fetch user transactions   |
+| PUT     | /api/users/{id}      | Update profile details      |
