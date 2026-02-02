@@ -1,0 +1,17 @@
+package com.fintrack.backend.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**") // Apply to all endpoints
+                .allowedOrigins("http://localhost:8001") // Allow requests from ANY frontend (Web, Mobile, etc.)
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allow these HTTP methods
+                .allowedHeaders("Content-type", "Authorization"); // Allow all headers
+    }
+}

@@ -39,7 +39,7 @@ class TransactionControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // Test 6: POST request returns 200 OK on success
+    // POST request returns 200 OK on success
     @Test
     void createTransaction_Success_Returns200() throws Exception {
         Transaction transaction = Transaction.builder()
@@ -57,7 +57,7 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.amount").value(100));
     }
 
-    // Test 7: POST request returns 400 Bad Request on Service Exception (e.g., Low Balance)
+    // POST request returns 400 Bad Request on Service Exception (e.g., Low Balance)
     @Test
     void createTransaction_InsufficientFunds_Returns400() throws Exception {
         Transaction transaction = Transaction.builder()
@@ -76,7 +76,7 @@ class TransactionControllerTest {
                 .andExpect(content().string("Insufficient balance"));
     }
 
-    // Test 8: GET request returns list of transactions
+    // GET request returns list of transactions
     @Test
     void getUserTransactions_ReturnsList() throws Exception {
         Transaction t1 = Transaction.builder().description("Coffee").build();
@@ -91,7 +91,7 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$[0].description").value("Coffee"));
     }
 
-    // Test 9: GET request returns empty list if no data
+    // GET request returns empty list if no data
     @Test
     void getUserTransactions_NoData_ReturnsEmpty() throws Exception {
         when(transactionRepository.findByUserId(1L)).thenReturn(Collections.emptyList());

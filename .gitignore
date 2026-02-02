@@ -31,3 +31,16 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Windows thumbnail caches
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# macOS folder attributes
+.DS_Store
+
+*.log
+
+.env
+.env.local
