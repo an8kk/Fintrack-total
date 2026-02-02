@@ -1,5 +1,6 @@
 package com.fintrack.backend.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -14,8 +15,8 @@ import java.util.function.Function;
 @Component
 @Slf4j 
 public class JwtUtils {
-
-    private static final String SECRET_KEY = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
+    @Value("${app.jwt.secret}")
+    private String SECRET_KEY;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
