@@ -23,7 +23,8 @@ public class User {
     private String username;
 
     private String email;
-
+    @Column(name = "password", nullable = false)
+    private String password;
     // Current balance needed for the logic check
     private BigDecimal balance = BigDecimal.ZERO;
 

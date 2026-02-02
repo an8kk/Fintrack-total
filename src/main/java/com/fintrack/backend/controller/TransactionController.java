@@ -18,7 +18,6 @@ public class TransactionController {
     private final TransactionRepository transactionRepository;
 
     // POST endpoint to create a transaction
-    // Example usage: POST /api/transactions?userId=1
     @PostMapping
     public ResponseEntity<?> createTransaction(@RequestParam Long userId, @RequestBody Transaction transaction) {
         try {

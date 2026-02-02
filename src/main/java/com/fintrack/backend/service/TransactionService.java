@@ -38,10 +38,8 @@ public class TransactionService {
                         userId, user.getBalance(), transaction.getAmount());
                 throw new RuntimeException("Insufficient balance to complete this transaction.");
             }
-            // Deduct from balance
             user.setBalance(user.getBalance().subtract(transaction.getAmount()));
         } else {
-            // Add to balance (Income)
             user.setBalance(user.getBalance().add(transaction.getAmount()));
         }
 
@@ -50,7 +48,7 @@ public class TransactionService {
         
         // Save logic
         Transaction savedTransaction = transactionRepository.save(transaction);
-        userRepository.save(user); // Update user balance
+        userRepository.save(user); 
 
         log.info("Transaction completed successfully. New Balance: {}", user.getBalance());
         
