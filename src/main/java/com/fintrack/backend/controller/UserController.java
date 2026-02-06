@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
-    private final JwtUtils jwtUtils; // Inject JwtUtils
-    private final UserDetailsService userDetailsService; // Inject UserDetailsService
+    private final JwtUtils jwtUtils; 
+    private final UserDetailsService userDetailsService; 
 
-    // Endpoint 1: Update Profile -> Returns NEW TOKEN
+    // Endpoint 1: Update Profile 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserUpdateDto updateDto) {
         try {

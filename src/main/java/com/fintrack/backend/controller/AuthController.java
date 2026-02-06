@@ -4,6 +4,8 @@ import com.fintrack.backend.dto.*;
 import com.fintrack.backend.entity.User;
 import com.fintrack.backend.repository.UserRepository;
 import com.fintrack.backend.security.JwtUtils;
+import com.fintrack.backend.service.CategoryService;
+
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j; // Import Slf4j
@@ -29,7 +31,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final UserDetailsService userDetailsService;
-
+    private final CategoryService categoryService;
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         log.info("Attempting to register user with email: {}", user.getEmail());
@@ -42,7 +44,9 @@ public class AuthController {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setBalance(BigDecimal.ZERO);
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        categoryService.createDefaultCategories(savedUser);
         log.info("User registered successfully: {}", user.getEmail());
 
         return ResponseEntity.ok("User registered successfully");
