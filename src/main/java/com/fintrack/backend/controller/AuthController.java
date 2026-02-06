@@ -1,5 +1,6 @@
 package com.fintrack.backend.controller;
 
+import com.fintrack.backend.dto.*;
 import com.fintrack.backend.entity.User;
 import com.fintrack.backend.repository.UserRepository;
 import com.fintrack.backend.security.JwtUtils;
@@ -20,7 +21,7 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Slf4j 
+@Slf4j
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -40,10 +41,10 @@ public class AuthController {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setBalance(BigDecimal.ZERO);
-        
+
         userRepository.save(user);
         log.info("User registered successfully: {}", user.getEmail());
-        
+
         return ResponseEntity.ok("User registered successfully");
     }
 
@@ -53,17 +54,23 @@ public class AuthController {
 
         try {
             authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
             log.debug("Authentication successful for {}", request.getEmail());
 
             final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
             final String token = jwtUtils.generateToken(userDetails);
-            
+
             User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
 
+            // ... внутри метода login, после получения объекта user
             log.info("Token generated successfully for user ID: {}", user.getId());
-            return ResponseEntity.ok(new AuthResponse(token, user.getId(), user.getUsername()));
+
+            // Фикс: Добавляем user.getEmail() четвертым аргументом
+            return ResponseEntity.ok(new AuthResponse(
+                    token,
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail()));
 
         } catch (AuthenticationException e) {
             log.error("Login failed for {}: Invalid credentials", request.getEmail());
@@ -76,17 +83,4 @@ public class AuthController {
 class LoginRequest {
     private String email;
     private String password;
-}
-
-@Data
-class AuthResponse {
-    private String token;
-    private Long userId;
-    private String username;
-    
-    public AuthResponse(String token, Long userId, String username) {
-        this.token = token;
-        this.userId = userId;
-        this.username = username;
-    }
 }
