@@ -1,154 +1,103 @@
 package com.fintrack.backend.controller;
-import com.fintrack.backend.dto.*;
+
+import com.fintrack.backend.dto.AuthResponse;
+import com.fintrack.backend.dto.ForgotPasswordRequest;
+import com.fintrack.backend.dto.LoginRequest;
+import com.fintrack.backend.dto.ResetPasswordDto;
 import com.fintrack.backend.entity.User;
-import com.fintrack.backend.repository.UserRepository;
-import com.fintrack.backend.security.JwtUtils;
+import com.fintrack.backend.service.AuthService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 class AuthControllerTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    @MockBean
+    private AuthService authService;
 
-    @Mock
-    private AuthenticationManager authenticationManager;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    @Mock
-    private JwtUtils jwtUtils;
+    private User testUser;
+    private LoginRequest loginRequest;
 
-    @Mock
-    private UserDetailsService userDetailsService;
+    @BeforeEach
+    void setUp() {
+        testUser = new User();
+        testUser.setUsername("testuser");
+        testUser.setEmail("test@example.com");
+        testUser.setPassword("password123");
 
-    @InjectMocks
-    private AuthController authController;
-
-    // --- REGISTRATION TESTS ---
-
-    @Test
-    void register_NewUser_Success() {
-        // Arrange
-        User newUser = new User();
-        newUser.setEmail("anuar@test.com");
-        newUser.setPassword("rawPassword");
-        newUser.setUsername("Anuar");
-
-        when(userRepository.findByEmail("anuar@test.com")).thenReturn(Optional.empty());
-        when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
-
-        // Act
-        ResponseEntity<?> response = authController.register(newUser);
-
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("User registered successfully", response.getBody());
-        
-        // Verify password was hashed and balance set to zero
-        verify(passwordEncoder).encode("rawPassword");
-        verify(userRepository).save(argThat(user -> 
-            user.getPassword().equals("encodedPassword") && 
-            user.getBalance().equals(BigDecimal.ZERO)
-        ));
-    }
-
-    @Test
-    void register_ExistingEmail_ReturnsBadRequest() {
-        // Arrange
-        User existingUser = new User();
-        existingUser.setEmail("anuar@test.com");
-
-        when(userRepository.findByEmail("anuar@test.com")).thenReturn(Optional.of(new User()));
-
-        // Act
-        ResponseEntity<?> response = authController.register(existingUser);
-
-        // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Email already exists", response.getBody());
-        verify(userRepository, never()).save(any());
-    }
-
-    // --- LOGIN TESTS ---
-
-    @Test
-    void login_Success_ReturnsToken() {
-        // Arrange
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setEmail("anuar@test.com");
+        loginRequest = new LoginRequest();
+        loginRequest.setEmail("test@example.com");
         loginRequest.setPassword("password123");
-
-        User mockUser = new User();
-        mockUser.setId(1L);
-        mockUser.setUsername("Anuar");
-        mockUser.setEmail("anuar@test.com");
-
-        UserDetails mockUserDetails = org.springframework.security.core.userdetails.User
-                .withUsername("anuar@test.com")
-                .password("encodedPass")
-                .authorities("USER")
-                .build();
-
-        // Mock the AuthenticationManager (successful login)
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(null); // Return value ignored in controller, just ensures no exception thrown
-
-        // Mock UserDetails loading
-        when(userDetailsService.loadUserByUsername("anuar@test.com")).thenReturn(mockUserDetails);
-
-        // Mock Token Generation
-        when(jwtUtils.generateToken(mockUserDetails)).thenReturn("fake-jwt-token");
-
-        // Mock User Retrieval for ID
-        when(userRepository.findByEmail("anuar@test.com")).thenReturn(Optional.of(mockUser));
-
-        // Act
-        ResponseEntity<?> response = authController.login(loginRequest);
-
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody() instanceof AuthResponse);
-        
-        AuthResponse authResponse = (AuthResponse) response.getBody();
-        assertEquals("fake-jwt-token", authResponse.getToken());
-        assertEquals(1L, authResponse.getUserId());
-        assertEquals("Anuar", authResponse.getUsername());
     }
 
     @Test
-    void login_InvalidCredentials_ThrowsException() {
-        // Arrange
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setEmail("wrong@test.com");
-        loginRequest.setPassword("wrongPass");
+    void register_success() throws Exception {
+        when(authService.register(any(User.class))).thenReturn("User registered successfully");
 
-        // Simulate Auth Failure
-        when(authenticationManager.authenticate(any()))
-                .thenThrow(new RuntimeException("Bad Credentials"));
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(testUser)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("User registered successfully"));
+    }
 
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> {
-            authController.login(loginRequest);
-        });
+    @Test
+    void login_success() throws Exception {
+        AuthResponse response = new AuthResponse("mock-jwt-token", 1L, "testuser", "test@example.com");
+        when(authService.login(any(LoginRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("mock-jwt-token"))
+                .andExpect(jsonPath("$.userId").value(1));
+    }
+
+    @Test
+    void forgotPassword_success() throws Exception {
+        ForgotPasswordRequest request = new ForgotPasswordRequest();
+        request.setEmail("test@example.com");
+        when(authService.requestPasswordReset(anyString())).thenReturn("Email sent");
+
+        mockMvc.perform(post("/api/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Email sent"));
+    }
+
+    @Test
+    void resetPassword_success() throws Exception {
+        ResetPasswordDto dto = new ResetPasswordDto();
+        dto.setToken("reset-1");
+        dto.setNewPassword("newpass123");
+        when(authService.resetPassword(any(ResetPasswordDto.class))).thenReturn("Success");
+
+        mockMvc.perform(post("/api/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Success"));
     }
 }

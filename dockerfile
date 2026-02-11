@@ -1,13 +1,13 @@
-# Step 1: Build the App
-# Changed to a supported Temurin-based Maven image
-FROM maven:3.8.5-eclipse-temurin-17 AS build
+# Build stage
+FROM maven:3.8.4-openjdk-17-slim AS build
 WORKDIR /app
-COPY . .
+COPY pom.xml .
+COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Step 2: Run the App
-FROM eclipse-temurin:17-jre-alpine
+# Run stage
+FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

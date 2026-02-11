@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j; 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -13,10 +13,10 @@ import java.util.Date;
 import java.util.function.Function;
 
 @Component
-@Slf4j 
+@Slf4j
 public class JwtUtils {
     @Value("${app.jwt.secret}")
-    private String SECRET_KEY;
+    private String secretKey;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -40,7 +40,8 @@ public class JwtUtils {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         boolean isValid = (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-        if (!isValid) log.warn("Token validation failed for user: {}", username);
+        if (!isValid)
+            log.warn("Token validation failed for user: {}", username);
         return isValid;
     }
 
@@ -61,7 +62,7 @@ public class JwtUtils {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

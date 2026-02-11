@@ -1,35 +1,41 @@
-FinTrack Backend (Spring Boot)
+# 💰 FinTrack Backend (Spring Boot)
 
-Tech Stack
-Java 17 / Spring Boot 3.x
-Spring Security (JWT-based stateless authentication)
-PostgreSQL 
-Hibernate/JPA (ORM & Database mapping)
-Lombok 
+FinTrack Backend is a secure, scalable REST API built with **Spring Boot 3.2**. It handles core financial logic, user authentication, and real-time transaction tracking.
 
-Security Features
-Stateless Authentication: Uses JWT tokens to ensure horizontal scalability.
-BCrypt Hashing: All passwords are salted and hashed before storage.
-CORS Configuration: Strictly managed to allow secure communication with the Flutter frontend.
+## 🚀 Key Features
+- **Security**: Stateless JWT-based authentication.
+- **Data Integrity**: Automated balance calculations and validation guards.
+- **Logging**: Comprehensive multi-level logging (INFO/DEBUG/ERROR).
+- **Compliance**: Implements modern security patterns including BCrypt hashing and secure CORS.
 
-Getting Started
+## 🛠️ Tech Stack
+- **Language**: Java 17
+- **Framework**: Spring Boot 3.2
+- **Persistence**: JPA / Hibernate (PostgreSQL 15)
+- **Security**: Spring Security + JWT
+- **Build Tool**: Maven
 
-1. Environment Configuration
-Create a `.env` file copying the .env.example file:
-- `JWT_SECRET`: Your 256-bit signing key.
-- `DB_URL`: Your local DB URL.
-- `DB_USERNAME`: Your DB user.
-- `DB_PASSWORD`: Your DB password.
+## 📦 Getting Started
 
-2. Run the Application
-Command line:
+### Prerequisites
+- JDK 17+
+- PostgreSQL 15
+
+### Running Locally
+1. Configure `src/main/resources/application.properties` or use environment variables.
+2. Run with Maven:
+```bash
 mvn clean spring-boot:run
+```
 
-3. API Endpoints
+### Docker Support
+Includes a multi-stage `Dockerfile` and `docker-compose.yml` (at root) for containerized deployment.
 
-| Method | Endpoint | Description |
-| :---         |     :---:      |          ---: |
-| POST   | /api/auth/register     | Create a new account    |
-| POST     | /api/auth/login       | Receieve a JWT Token      |
-| GET   | /api/transactions/{id}     | Fetch user transactions   |
-| PUT     | /api/users/{id}      | Update profile details      |
+## 🧪 Testing
+Includes **37 automated tests** (Unit + Integration).
+```bash
+mvn test
+```
+
+## 📖 API Documentation
+Full endpoint details are available in the [Main Documentation](../documentation.md).

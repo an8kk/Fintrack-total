@@ -4,6 +4,8 @@ import com.fintrack.backend.dto.MonthlyStatsDto;
 import com.fintrack.backend.entity.Notification;
 import com.fintrack.backend.entity.Transaction;
 import com.fintrack.backend.entity.User;
+import com.fintrack.backend.exception.InsufficientBalanceException;
+import com.fintrack.backend.exception.ResourceNotFoundException;
 import com.fintrack.backend.repository.NotificationRepository;
 import com.fintrack.backend.repository.TransactionRepository;
 import com.fintrack.backend.repository.UserRepository;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,19 +32,30 @@ public class TransactionService {
 
     @Transactional
     public Transaction saveTransaction(Long userId, Transaction transaction) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        log.info("Attempting to save transaction for user ID: {}", userId);
+        log.debug("Transaction details: {}", transaction);
 
-        if (transaction.getDate() == null) transaction.setDate(LocalDateTime.now());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.error("Failed to save transaction: User ID {} not found", userId);
+                    return new ResourceNotFoundException("User not found");
+                });
+
+        if (transaction.getDate() == null) {
+            log.debug("Setting current timestamp for transaction");
+            transaction.setDate(LocalDateTime.now());
+        }
 
         if (transaction.getType() == Transaction.TransactionType.EXPENSE) {
             if (user.getBalance().compareTo(transaction.getAmount()) < 0) {
-                throw new RuntimeException("Insufficient balance");
+                log.warn("Transaction failed: Insufficient balance for user ID {}. Current: {}, Required: {}",
+                        userId, user.getBalance(), transaction.getAmount());
+                throw new InsufficientBalanceException("Insufficient balance");
             }
             user.setBalance(user.getBalance().subtract(transaction.getAmount()));
-            
-            // If expense > 500, trigger alert
+
             if (transaction.getAmount().compareTo(new BigDecimal("500")) > 0) {
+                log.info("High expense detected ($>500). Creating notification for user ID: {}", userId);
                 Notification notif = Notification.builder()
                         .user(user)
                         .title("High Expense Alert")
@@ -51,21 +65,31 @@ public class TransactionService {
                         .build();
                 notificationRepository.save(notif);
             }
-            // --------------------------
         } else {
+            log.debug("Processing income transaction. Increasing balance.");
             user.setBalance(user.getBalance().add(transaction.getAmount()));
         }
 
         transaction.setUser(user);
         userRepository.save(user);
-        return transactionRepository.save(transaction);
+        Transaction saved = transactionRepository.save(transaction);
+
+        log.info("Transaction saved successfully with ID: {}. New balance: {}", saved.getId(), user.getBalance());
+        return saved;
     }
+
     @Transactional
     public void deleteTransaction(Long transactionId) {
+        log.info("Attempting to delete transaction ID: {}", transactionId);
+
         Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+                .orElseThrow(() -> {
+                    log.error("Failed to delete transaction: ID {} not found", transactionId);
+                    return new ResourceNotFoundException("Transaction not found");
+                });
 
         User user = transaction.getUser();
+        log.debug("Reversing balance for user ID: {}", user.getId());
 
         if (transaction.getType() == Transaction.TransactionType.EXPENSE) {
             user.setBalance(user.getBalance().add(transaction.getAmount()));
@@ -75,17 +99,26 @@ public class TransactionService {
 
         userRepository.save(user);
         transactionRepository.delete(transaction);
-        
-        log.info("Transaction {} deleted. Balance refunded for user {}", transactionId, user.getId());
+
+        log.info("Transaction {} deleted. Balance adjusted for user ID: {}. New balance: {}",
+                transactionId, user.getId(), user.getBalance());
+    }
+
+    public List<Transaction> getTransactionsByUserId(Long userId) {
+        log.debug("Fetching transactions for user ID: {}", userId);
+        return transactionRepository.findByUserId(userId);
     }
 
     public MonthlyStatsDto getMonthlyStats(Long userId, int month, int year) {
-        List<Transaction> all = transactionRepository.findByUserId(userId);
-        
-        // Filter by Month/Year
-        List<Transaction> filtered = all.stream()
-                .filter(t -> t.getDate().getMonthValue() == month && t.getDate().getYear() == year)
-                .toList();
+        log.info("Calculating monthly stats for user ID: {} (Date: {}/{})", userId, month, year);
+
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDateTime start = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime end = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+
+        log.debug("Filtering transactions between {} and {}", start, end);
+        List<Transaction> filtered = transactionRepository.findByUserIdAndDateBetween(userId, start, end);
+        log.debug("Found {} transactions in the specified range", filtered.size());
 
         BigDecimal totalIncome = filtered.stream()
                 .filter(t -> t.getType() == Transaction.TransactionType.INCOME)
@@ -101,9 +134,9 @@ public class TransactionService {
                 .filter(t -> t.getType() == Transaction.TransactionType.EXPENSE)
                 .collect(Collectors.groupingBy(
                         Transaction::getCategory,
-                        Collectors.reducing(BigDecimal.ZERO, Transaction::getAmount, BigDecimal::add)
-                ));
+                        Collectors.reducing(BigDecimal.ZERO, Transaction::getAmount, BigDecimal::add)));
 
+        log.info("Monthly stats calculated. Income: {}, Expenses: {}", totalIncome, totalExpense);
         return new MonthlyStatsDto(totalIncome, totalExpense, categoryBreakdown);
     }
 }

@@ -21,6 +21,7 @@ public class Notification {
 
     private String title;
     private String message;
+    @Builder.Default
     private boolean isRead = false;
     private LocalDateTime date;
 
