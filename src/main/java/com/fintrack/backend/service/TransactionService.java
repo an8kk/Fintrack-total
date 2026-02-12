@@ -102,6 +102,44 @@ public class TransactionService {
 
         log.info("Transaction {} deleted. Balance adjusted for user ID: {}. New balance: {}",
                 transactionId, user.getId(), user.getBalance());
+        log.info("Transaction {} deleted. Balance adjusted for user ID: {}. New balance: {}",
+                transactionId, user.getId(), user.getBalance());
+    }
+
+    @Transactional
+    public Transaction updateTransaction(Long id, Transaction updatedTransaction) {
+        log.info("Updating transaction ID: {}", id);
+
+        Transaction existing = transactionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+
+        // 1. Revert old balance
+        User user = existing.getUser();
+        if (existing.getType() == Transaction.TransactionType.EXPENSE) {
+            user.setBalance(user.getBalance().add(existing.getAmount()));
+        } else {
+            user.setBalance(user.getBalance().subtract(existing.getAmount()));
+        }
+
+        // 2. Update fields
+        existing.setAmount(updatedTransaction.getAmount());
+        existing.setCategory(updatedTransaction.getCategory());
+        existing.setDescription(updatedTransaction.getDescription());
+        existing.setDate(updatedTransaction.getDate());
+        existing.setType(updatedTransaction.getType());
+
+        // 3. Apply new balance
+        if (existing.getType() == Transaction.TransactionType.EXPENSE) {
+            if (user.getBalance().compareTo(existing.getAmount()) < 0) {
+                throw new InsufficientBalanceException("Insufficient balance for update");
+            }
+            user.setBalance(user.getBalance().subtract(existing.getAmount()));
+        } else {
+            user.setBalance(user.getBalance().add(existing.getAmount()));
+        }
+
+        userRepository.save(user);
+        return transactionRepository.save(existing);
     }
 
     public List<Transaction> getTransactionsByUserId(Long userId) {

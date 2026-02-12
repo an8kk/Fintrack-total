@@ -30,7 +30,9 @@ public class UserController {
                 newToken,
                 userDto.getId(),
                 userDto.getUsername(),
-                userDto.getEmail()));
+                userDto.getEmail(),
+                userDto.getRole(),
+                userDto.isBlocked()));
     }
 
     @PutMapping("/{id}/password")
@@ -45,11 +47,29 @@ public class UserController {
                 newToken,
                 userDto.getId(),
                 userDto.getUsername(),
-                userDto.getEmail()));
+                userDto.getEmail(),
+                userDto.getRole(),
+                userDto.isBlocked()));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getProfile(@PathVariable("id") Long id) {
         return ResponseEntity.ok(userService.getUserProfile(id));
+    }
+
+    @GetMapping
+    public ResponseEntity<java.util.List<UserResponseDto>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<UserResponseDto> toggleUserStatus(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.toggleUserBlockStatus(id));
+    }
+
+    @PutMapping("/{id}/details")
+    public ResponseEntity<UserResponseDto> updateUserDetails(@PathVariable Long id,
+            @RequestBody UserUpdateDto updateDto) {
+        return ResponseEntity.ok(userService.updateUserByAdmin(id, updateDto));
     }
 }

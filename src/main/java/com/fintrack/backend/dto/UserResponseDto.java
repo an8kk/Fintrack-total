@@ -10,6 +10,8 @@ public class UserResponseDto {
     private Long id;
     private String username;
     private String email;
-    private BigDecimal balance; 
+    private BigDecimal balance;
+    private String role;
+    private boolean isBlocked;
     // NO PASSWORD HERE!
 }

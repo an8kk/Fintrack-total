@@ -28,6 +28,11 @@ public class User {
     // Current balance needed for the logic check
     private BigDecimal balance = BigDecimal.ZERO;
 
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.USER;
+
+    private boolean isBlocked = false;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
 }

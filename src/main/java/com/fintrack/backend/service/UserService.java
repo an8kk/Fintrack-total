@@ -42,6 +42,27 @@ public class UserService {
     }
 
     @Transactional
+    public UserResponseDto updateUserByAdmin(Long userId, UserUpdateDto request) {
+        log.info("Admin updating profile for User ID: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+
+        if (request.getUsername() != null && !request.getUsername().isBlank()) {
+            user.setUsername(request.getUsername());
+        }
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            user.setEmail(request.getEmail());
+        }
+
+        User savedUser = userRepository.save(user);
+        log.info("User profile updated by Admin successfully");
+
+        return mapToDto(savedUser);
+    }
+
+    @Transactional
     public void changePassword(Long userId, PasswordChangeDto request) {
         log.info("Password change request for User ID: {}", userId);
 
@@ -58,6 +79,23 @@ public class UserService {
         log.info("Password changed successfully for User ID: {}", userId);
     }
 
+    public java.util.List<UserResponseDto> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::mapToDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Transactional
+    public UserResponseDto toggleUserBlockStatus(Long userId) {
+        log.info("Toggling block status for User ID: {}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+
+        user.setBlocked(!user.isBlocked());
+        User saved = userRepository.save(user);
+        return mapToDto(saved);
+    }
+
     public UserResponseDto getUserProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
@@ -70,6 +108,8 @@ public class UserService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .balance(user.getBalance())
+                .role(user.getRole().name())
+                .isBlocked(user.isBlocked())
                 .build();
     }
 }

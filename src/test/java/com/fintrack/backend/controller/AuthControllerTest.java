@@ -63,7 +63,7 @@ class AuthControllerTest {
 
     @Test
     void login_success() throws Exception {
-        AuthResponse response = new AuthResponse("mock-jwt-token", 1L, "testuser", "test@example.com");
+        AuthResponse response = new AuthResponse("mock-jwt-token", 1L, "testuser", "test@example.com", "USER", false);
         when(authService.login(any(LoginRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/auth/login")

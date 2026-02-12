@@ -75,7 +75,8 @@ public class AuthService {
         log.info("Login successful for user ID: {}", user.getId());
         log.debug("JWT Token generated.");
 
-        return new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail());
+        return new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail(), user.getRole().name(),
+                user.isBlocked());
     }
 
     public String requestPasswordReset(String email) {
