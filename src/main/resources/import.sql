@@ -1,6 +1,6 @@
 -- Create test user (password is 'password123' hashed)
-INSERT INTO users (id, username, email, password, balance, role) VALUES 
-(1, 'demo_user', 'demo@example.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOnu', 1500.00, 'USER')
+INSERT INTO users (id, username, email, password, balance, role, is_blocked) VALUES 
+(1, 'demo_user', 'demo@example.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOnu', 1500.00, 'ADMIN', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Create default categories for demo user
