@@ -5,6 +5,9 @@ import com.fintrack.backend.dto.UserResponseDto;
 import com.fintrack.backend.dto.UserUpdateDto;
 import com.fintrack.backend.entity.User;
 import com.fintrack.backend.exception.ResourceNotFoundException;
+
+import java.math.BigDecimal;
+import com.fintrack.backend.repository.TransactionRepository;
 import com.fintrack.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final TransactionRepository transactionRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -103,11 +107,12 @@ public class UserService {
     }
 
     private UserResponseDto mapToDto(User user) {
+        BigDecimal calculatedBalance = transactionRepository.calculateBalanceByUserId(user.getId());
         return UserResponseDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .balance(user.getBalance())
+                .balance(calculatedBalance)
                 .role(user.getRole().name())
                 .isBlocked(user.isBlocked())
                 .build();

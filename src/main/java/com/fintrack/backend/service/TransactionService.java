@@ -33,29 +33,24 @@ public class TransactionService {
     @Transactional
     public Transaction saveTransaction(Long userId, Transaction transaction) {
         log.info("Attempting to save transaction for user ID: {}", userId);
-        log.debug("Transaction details: {}", transaction);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.error("Failed to save transaction: User ID {} not found", userId);
-                    return new ResourceNotFoundException("User not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (transaction.getDate() == null) {
-            log.debug("Setting current timestamp for transaction");
             transaction.setDate(LocalDateTime.now());
         }
 
+        // Use Ground Truth balance for validation
+        BigDecimal groundTruthBalance = transactionRepository.calculateBalanceByUserId(userId);
         if (transaction.getType() == Transaction.TransactionType.EXPENSE) {
-            if (user.getBalance().compareTo(transaction.getAmount()) < 0) {
+            if (groundTruthBalance.compareTo(transaction.getAmount()) < 0) {
                 log.warn("Transaction failed: Insufficient balance for user ID {}. Current: {}, Required: {}",
-                        userId, user.getBalance(), transaction.getAmount());
+                        userId, groundTruthBalance, transaction.getAmount());
                 throw new InsufficientBalanceException("Insufficient balance");
             }
-            user.setBalance(user.getBalance().subtract(transaction.getAmount()));
 
             if (transaction.getAmount().compareTo(new BigDecimal("500")) > 0) {
-                log.info("High expense detected ($>500). Creating notification for user ID: {}", userId);
                 Notification notif = Notification.builder()
                         .user(user)
                         .title("High Expense Alert")
@@ -65,14 +60,14 @@ public class TransactionService {
                         .build();
                 notificationRepository.save(notif);
             }
-        } else {
-            log.debug("Processing income transaction. Increasing balance.");
-            user.setBalance(user.getBalance().add(transaction.getAmount()));
         }
 
         transaction.setUser(user);
-        userRepository.save(user);
         Transaction saved = transactionRepository.save(transaction);
+
+        // Final sync: recalculate after save and update user entity
+        user.setBalance(transactionRepository.calculateBalanceByUserId(userId));
+        userRepository.save(user);
 
         log.info("Transaction saved successfully with ID: {}. New balance: {}", saved.getId(), user.getBalance());
         return saved;
@@ -83,27 +78,16 @@ public class TransactionService {
         log.info("Attempting to delete transaction ID: {}", transactionId);
 
         Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> {
-                    log.error("Failed to delete transaction: ID {} not found", transactionId);
-                    return new ResourceNotFoundException("Transaction not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
         User user = transaction.getUser();
-        log.debug("Reversing balance for user ID: {}", user.getId());
-
-        if (transaction.getType() == Transaction.TransactionType.EXPENSE) {
-            user.setBalance(user.getBalance().add(transaction.getAmount()));
-        } else {
-            user.setBalance(user.getBalance().subtract(transaction.getAmount()));
-        }
-
-        userRepository.save(user);
         transactionRepository.delete(transaction);
 
-        log.info("Transaction {} deleted. Balance adjusted for user ID: {}. New balance: {}",
-                transactionId, user.getId(), user.getBalance());
-        log.info("Transaction {} deleted. Balance adjusted for user ID: {}. New balance: {}",
-                transactionId, user.getId(), user.getBalance());
+        // Recalculate and sync balance
+        user.setBalance(transactionRepository.calculateBalanceByUserId(user.getId()));
+        userRepository.save(user);
+
+        log.info("Transaction {} deleted. New balance: {}", transactionId, user.getBalance());
     }
 
     @Transactional
@@ -113,33 +97,24 @@ public class TransactionService {
         Transaction existing = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
-        // 1. Revert old balance
         User user = existing.getUser();
-        if (existing.getType() == Transaction.TransactionType.EXPENSE) {
-            user.setBalance(user.getBalance().add(existing.getAmount()));
-        } else {
-            user.setBalance(user.getBalance().subtract(existing.getAmount()));
-        }
 
-        // 2. Update fields
+        // Update fields
         existing.setAmount(updatedTransaction.getAmount());
         existing.setCategory(updatedTransaction.getCategory());
         existing.setDescription(updatedTransaction.getDescription());
         existing.setDate(updatedTransaction.getDate());
         existing.setType(updatedTransaction.getType());
 
-        // 3. Apply new balance
-        if (existing.getType() == Transaction.TransactionType.EXPENSE) {
-            if (user.getBalance().compareTo(existing.getAmount()) < 0) {
-                throw new InsufficientBalanceException("Insufficient balance for update");
-            }
-            user.setBalance(user.getBalance().subtract(existing.getAmount()));
-        } else {
-            user.setBalance(user.getBalance().add(existing.getAmount()));
-        }
+        // Save update
+        Transaction saved = transactionRepository.save(existing);
 
+        // Recalculate and sync balance
+        BigDecimal finalBalance = transactionRepository.calculateBalanceByUserId(user.getId());
+        user.setBalance(finalBalance);
         userRepository.save(user);
-        return transactionRepository.save(existing);
+
+        return saved;
     }
 
     public List<Transaction> getTransactionsByUserId(Long userId) {

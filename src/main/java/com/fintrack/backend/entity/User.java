@@ -33,6 +33,8 @@ public class User {
 
     private boolean isBlocked = false;
 
+    private String fcmToken;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
 }
