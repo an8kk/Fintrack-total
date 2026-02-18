@@ -5,11 +5,13 @@ import com.fintrack.backend.security.JwtUtils;
 import com.fintrack.backend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -22,6 +24,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<AuthResponse> updateUser(@PathVariable("id") Long id,
             @Valid @RequestBody UserUpdateDto updateDto) {
+        log.info("PUT /api/users/{} — username={}, email={}", id, updateDto.getUsername(), updateDto.getEmail());
         UserResponseDto userDto = userService.updateUser(id, updateDto);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userDto.getEmail());
         String newToken = jwtUtils.generateToken(userDetails);
@@ -38,6 +41,7 @@ public class UserController {
     @PutMapping("/{id}/password")
     public ResponseEntity<AuthResponse> changePassword(@PathVariable("id") Long id,
             @Valid @RequestBody PasswordChangeDto passDto) {
+        log.info("PUT /api/users/{}/password", id);
         userService.changePassword(id, passDto);
         UserResponseDto userDto = userService.getUserProfile(id);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userDto.getEmail());
@@ -54,22 +58,26 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getProfile(@PathVariable("id") Long id) {
+        log.info("GET /api/users/{}", id);
         return ResponseEntity.ok(userService.getUserProfile(id));
     }
 
     @GetMapping
     public ResponseEntity<java.util.List<UserResponseDto>> getAllUsers() {
+        log.info("GET /api/users — listing all users");
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @PutMapping("/{id}/status")
     public ResponseEntity<UserResponseDto> toggleUserStatus(@PathVariable Long id) {
+        log.info("PUT /api/users/{}/status — toggling block status", id);
         return ResponseEntity.ok(userService.toggleUserBlockStatus(id));
     }
 
     @PutMapping("/{id}/details")
     public ResponseEntity<UserResponseDto> updateUserDetails(@PathVariable Long id,
             @RequestBody UserUpdateDto updateDto) {
+        log.info("PUT /api/users/{}/details — admin update, username={}", id, updateDto.getUsername());
         return ResponseEntity.ok(userService.updateUserByAdmin(id, updateDto));
     }
 }

@@ -1,7 +1,38 @@
-target
-.mvn
+# Build artifacts
+target/
+bin/
+build/
+out/
+
+# IDEs and System files
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Version Control
+.git
+.gitignore
+.gitattributes
+
+# Build Wrappers (You usually don't want these inside the image)
+.mvn/
 mvnw
 mvnw.cmd
-.git
-.idea
-*.iml
+.gradle/
+gradlew
+gradlew.bat
+
+# Docker specific
+Dockerfile
+.dockerignore
+docker-compose*
+
+# Sensitive data (CRITICAL)
+.env
+*.pem
+*.key
+certs/

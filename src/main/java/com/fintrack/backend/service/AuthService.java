@@ -31,6 +31,7 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final UserDetailsService userDetailsService;
     private final CategoryService categoryService;
+    private final SaltEdgeService saltEdgeService;
 
     @Transactional
     public String register(User user) {
@@ -47,6 +48,10 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
         categoryService.createDefaultCategories(savedUser);
+
+        if (savedUser.getSaltEdgeCustomerId() != null && !savedUser.getSaltEdgeCustomerId().isEmpty()) {
+            saltEdgeService.importDataForCustomer(savedUser);
+        }
 
         log.info("User registered successfully with ID: {}", savedUser.getId());
         return "User registered successfully";

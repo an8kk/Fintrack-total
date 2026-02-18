@@ -35,6 +35,12 @@ public class User {
 
     private String fcmToken;
 
+    @Column(name = "salt_edge_customer_id", unique = true)
+    private String saltEdgeCustomerId;
+
+    @Column(name = "salt_edge_connection_id")
+    private String saltEdgeConnectionId;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
 }

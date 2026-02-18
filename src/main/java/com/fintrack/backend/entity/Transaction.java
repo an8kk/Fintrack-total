@@ -31,6 +31,11 @@ public class Transaction {
 
     private LocalDateTime date;
 
+    private String currency;
+
+    @Column(unique = true)
+    private String externalId;
+
     // Enum to distinguish Income vs Expense
     @Enumerated(EnumType.STRING)
     private TransactionType type; 
