@@ -1,4 +1,3 @@
-import { RefineThemes } from "@refinedev/antd";
 import { ConfigProvider, theme } from "antd";
 import {
   type PropsWithChildren,
@@ -51,9 +50,13 @@ export const ColorModeContextProvider: React.FC<PropsWithChildren> = ({
       }}
     >
       <ConfigProvider
-        // you can change the theme colors here. example: ...RefineThemes.Magenta,
         theme={{
-          ...RefineThemes.Blue,
+          token: {
+            colorPrimary: "#2E7D32",
+            borderRadius: 12,
+            fontFamily:
+              "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          },
           algorithm: mode === "light" ? defaultAlgorithm : darkAlgorithm,
         }}
       >
@@ -62,3 +65,4 @@ export const ColorModeContextProvider: React.FC<PropsWithChildren> = ({
     </ColorModeContext.Provider>
   );
 };
+

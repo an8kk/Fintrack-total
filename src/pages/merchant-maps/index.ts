@@ -1,0 +1,1 @@
+export { MerchantMapList } from "./list";

@@ -1,5 +1,4 @@
-import { Authenticated, GitHubBanner, Refine } from "@refinedev/core";
-import { DevtoolsPanel, DevtoolsProvider } from "@refinedev/devtools";
+import { Authenticated, Refine } from "@refinedev/core";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
 
 import {
@@ -20,124 +19,150 @@ import { App as AntdApp } from "antd";
 import { BrowserRouter, Outlet, Route, Routes } from "react-router";
 import { Header } from "./components/header";
 import { ColorModeContextProvider } from "./contexts/color-mode";
-import {
-  BlogPostCreate,
-  BlogPostEdit,
-  BlogPostList,
-  BlogPostShow,
-} from "./pages/blog-posts";
-import {
-  CategoryCreate,
-  CategoryEdit,
-  CategoryList,
-  CategoryShow,
-} from "./pages/categories";
-import { ForgotPassword } from "./pages/forgotPassword";
+import { Dashboard } from "./pages/dashboard";
+import { UserList, UserShow, UserEdit, UserCreate } from "./pages/users";
+import { TransactionList, TransactionCreate } from "./pages/transactions";
+import { AuditLogList } from "./pages/audit-logs";
+import { MerchantMapList } from "./pages/merchant-maps";
+import { GlobalNotification } from "./pages/notifications";
+import { AiInsights } from "./pages/ai-insights";
 import { Login } from "./pages/login";
-import { Register } from "./pages/register";
 import { authProvider } from "./providers/auth";
 import { dataProvider } from "./providers/data";
+import {
+  DashboardOutlined,
+  TeamOutlined,
+  AuditOutlined,
+  TagsOutlined,
+  ExperimentOutlined,
+  NotificationOutlined,
+} from "@ant-design/icons";
 
 function App() {
   return (
     <BrowserRouter>
-      <GitHubBanner />
       <RefineKbarProvider>
         <ColorModeContextProvider>
           <AntdApp>
-            <DevtoolsProvider>
-              <Refine
-                dataProvider={dataProvider}
-                notificationProvider={useNotificationProvider}
-                routerProvider={routerProvider}
-                authProvider={authProvider}
-                resources={[
-                  {
-                    name: "blog_posts",
-                    list: "/blog-posts",
-                    create: "/blog-posts/create",
-                    edit: "/blog-posts/edit/:id",
-                    show: "/blog-posts/show/:id",
-                    meta: {
-                      canDelete: true,
-                    },
+            <Refine
+              dataProvider={dataProvider}
+              notificationProvider={useNotificationProvider}
+              routerProvider={routerProvider}
+              authProvider={authProvider}
+              resources={[
+                {
+                  name: "dashboard",
+                  list: "/",
+                  meta: {
+                    label: "Dashboard",
+                    icon: <DashboardOutlined />,
                   },
-                  {
-                    name: "categories",
-                    list: "/categories",
-                    create: "/categories/create",
-                    edit: "/categories/edit/:id",
-                    show: "/categories/show/:id",
-                    meta: {
-                      canDelete: true,
-                    },
+                },
+                {
+                  name: "users",
+                  list: "/users",
+                  create: "/users/create",
+                  show: "/users/show/:id",
+                  edit: "/users/edit/:id",
+                  meta: {
+                    canDelete: true,
+                    label: "Users",
+                    icon: <TeamOutlined />,
                   },
-                ]}
-                options={{
-                  syncWithLocation: true,
-                  warnWhenUnsavedChanges: true,
-                  projectId: "fEn3wp-aSUEya-MJ8hek",
-                }}
-              >
-                <Routes>
-                  <Route
-                    element={
-                      <Authenticated
-                        key="authenticated-inner"
-                        fallback={<CatchAllNavigate to="/login" />}
+                },
+                {
+                  name: "audit-logs",
+                  list: "/audit-logs",
+                  meta: {
+                    label: "Audit Logs",
+                    icon: <AuditOutlined />,
+                  },
+                },
+                {
+                  name: "merchant-maps",
+                  list: "/merchant-maps",
+                  meta: {
+                    label: "Merchant Maps",
+                    icon: <TagsOutlined />,
+                  },
+                },
+                {
+                  name: "ai-insights",
+                  list: "/ai-insights",
+                  meta: {
+                    label: "AI Insights",
+                    icon: <ExperimentOutlined />,
+                  },
+                },
+                {
+                  name: "notifications",
+                  list: "/notifications",
+                  meta: {
+                    label: "Broadcast",
+                    icon: <NotificationOutlined />,
+                  },
+                },
+              ]}
+              options={{
+                syncWithLocation: true,
+                warnWhenUnsavedChanges: true,
+                title: {
+                  text: "FinTrack Admin",
+                  icon: "💰",
+                },
+              }}
+            >
+              <Routes>
+                <Route
+                  element={
+                    <Authenticated
+                      key="authenticated-inner"
+                      fallback={<CatchAllNavigate to="/login" />}
+                    >
+                      <ThemedLayout
+                        Header={Header}
+                        Sider={(props) => (
+                          <ThemedSider {...props} fixed />
+                        )}
                       >
-                        <ThemedLayout
-                          Header={Header}
-                          Sider={(props) => <ThemedSider {...props} fixed />}
-                        >
-                          <Outlet />
-                        </ThemedLayout>
-                      </Authenticated>
-                    }
-                  >
-                    <Route
-                      index
-                      element={<NavigateToResource resource="blog_posts" />}
-                    />
-                    <Route path="/blog-posts">
-                      <Route index element={<BlogPostList />} />
-                      <Route path="create" element={<BlogPostCreate />} />
-                      <Route path="edit/:id" element={<BlogPostEdit />} />
-                      <Route path="show/:id" element={<BlogPostShow />} />
-                    </Route>
-                    <Route path="/categories">
-                      <Route index element={<CategoryList />} />
-                      <Route path="create" element={<CategoryCreate />} />
-                      <Route path="edit/:id" element={<CategoryEdit />} />
-                      <Route path="show/:id" element={<CategoryShow />} />
-                    </Route>
-                    <Route path="*" element={<ErrorComponent />} />
+                        <Outlet />
+                      </ThemedLayout>
+                    </Authenticated>
+                  }
+                >
+                  <Route index element={<Dashboard />} />
+                  <Route path="/users">
+                    <Route index element={<UserList />} />
+                    <Route path="create" element={<UserCreate />} />
+                    <Route path="show/:id" element={<UserShow />} />
+                    <Route path="edit/:id" element={<UserEdit />} />
+                    <Route path=":userId/transactions" element={<TransactionList />} />
+                    <Route path=":userId/transactions/create" element={<TransactionCreate />} />
                   </Route>
-                  <Route
-                    element={
-                      <Authenticated
-                        key="authenticated-outer"
-                        fallback={<Outlet />}
-                      >
-                        <NavigateToResource />
-                      </Authenticated>
-                    }
-                  >
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route
-                      path="/forgot-password"
-                      element={<ForgotPassword />}
-                    />
-                  </Route>
-                </Routes>
+                  <Route path="/audit-logs" element={<AuditLogList />} />
+                  <Route path="/merchant-maps" element={<MerchantMapList />} />
+                  <Route path="/ai-insights" element={<AiInsights />} />
+                  <Route path="/notifications" element={<GlobalNotification />} />
+                  <Route path="*" element={<ErrorComponent />} />
+                </Route>
+                <Route
+                  element={
+                    <Authenticated
+                      key="authenticated-outer"
+                      fallback={<Outlet />}
+                    >
+                      <NavigateToResource />
+                    </Authenticated>
+                  }
+                >
+                  <Route path="/login" element={<Login />} />
+                </Route>
+              </Routes>
 
-                <RefineKbar />
-                <UnsavedChangesNotifier />
-                <DocumentTitleHandler />
-              </Refine>
-              <DevtoolsPanel />
-            </DevtoolsProvider>
+              <RefineKbar />
+              <UnsavedChangesNotifier />
+              <DocumentTitleHandler />
+            </Refine>
           </AntdApp>
         </ColorModeContextProvider>
       </RefineKbarProvider>
