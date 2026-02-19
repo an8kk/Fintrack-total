@@ -39,16 +39,56 @@ public class SaltEdgeService {
 
     private static final String BASE_URL = "https://www.saltedge.com/api/v6";
 
+    /**
+     * Create a Salt Edge customer for a user. Returns the customer ID.
+     */
+    public String createCustomer(User user) {
+        String url = BASE_URL + "/customers";
+        log.info("Creating Salt Edge customer for userId={}, email={}", user.getId(), user.getEmail());
+
+        HttpHeaders headers = buildHeaders();
+        Map<String, Object> body = Map.of("data", Map.of("identifier", "fintrack_user_" + user.getId()));
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+            Map<String, Object> responseBody = response.getBody();
+            if (responseBody != null && responseBody.containsKey("data")) {
+                Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
+                String customerId = String.valueOf(data.get("id"));
+                log.info("Salt Edge customer created: {}", customerId);
+
+                user.setSaltEdgeCustomerId(customerId);
+                userRepository.save(user);
+                return customerId;
+            }
+        } catch (Exception e) {
+            log.error("Error creating Salt Edge customer for userId={}", user.getId(), e);
+            throw new RuntimeException("Failed to create Salt Edge customer", e);
+        }
+        return null;
+    }
+
+    /**
+     * Ensure customer exists and create a connect session. Returns the connect URL.
+     */
+    public String ensureCustomerAndCreateSession(User user) {
+        String customerId = user.getSaltEdgeCustomerId();
+        if (customerId == null || customerId.isBlank()) {
+            customerId = createCustomer(user);
+        }
+        if (customerId == null) {
+            throw new RuntimeException("Could not create Salt Edge customer");
+        }
+        return createConnectSession(customerId);
+    }
+
     public String createConnectSession(String customerId) {
         String url = BASE_URL + "/connections/connect";
         log.info("Creating Connect Session for customer: {} with return_to: {}", customerId,
                 "http://localhost:8001/");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("App-id", appId);
-        headers.set("Secret", secret);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        HttpHeaders headers = buildHeaders();
 
         SaltEdgeDTOs.ConnectRequestData requestData = SaltEdgeDTOs.ConnectRequestData.builder()
                 .customerId(customerId)
@@ -81,6 +121,15 @@ public class SaltEdgeService {
             throw new RuntimeException("Failed to create connect session", e);
         }
         return null;
+    }
+
+    private HttpHeaders buildHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("App-id", appId);
+        headers.set("Secret", secret);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        return headers;
     }
 
     public void handleCallback(Map<String, Object> callbackData) {

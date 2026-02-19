@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +28,7 @@ public class GeminiService {
         @Value("${gemini.api-key}")
         private String apiKey;
 
-        private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=";
+        private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
 
         public String analyzeSpending(List<Transaction> transactions) {
                 if (transactions == null || transactions.isEmpty()) {
@@ -46,7 +47,7 @@ public class GeminiService {
                 GeminiDTOs.GeminiRequest request = GeminiDTOs.GeminiRequest.builder()
                                 .systemInstruction(GeminiDTOs.Content.builder()
                                                 .parts(Collections.singletonList(GeminiDTOs.Part.builder()
-                                                                .text("You are a senior financial advisor. Your tone is professional and direct. Analyze the provided transactions for bad spending habits and savings opportunities. Transactions with negative amounts are expenses, positive amounts are income. Respect the currency provided in the transaction details (e.g., KZT, USD, EUR).")
+                                                                .text("You are a senior financial advisor. Your tone is professional and direct. Analyze the provided transactions for bad spending habits and savings opportunities. Negative amounts are expenses, positive are income. Each transaction is labeled with its type for clarity. Respect the currency provided (e.g., KZT, USD, EUR).")
                                                                 .build()))
                                                 .build())
                                 .contents(Collections.singletonList(GeminiDTOs.Content.builder()
@@ -55,6 +56,10 @@ public class GeminiService {
                                                                 .text(formattedTransactions)
                                                                 .build()))
                                                 .build()))
+                                .generationConfig(GeminiDTOs.GenerationConfig.builder()
+                                                .maxOutputTokens(400)
+                                                .temperature(0.7)
+                                                .build())
                                 .build();
 
                 HttpHeaders headers = new HttpHeaders();
@@ -85,12 +90,82 @@ public class GeminiService {
 
         private String formatTransaction(Transaction t) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                String type = t.getAmount().doubleValue() < 0 ? "EXPENSE" : "INCOME";
+                boolean isExpense = t.getType() == Transaction.TransactionType.EXPENSE;
+                BigDecimal amount = isExpense ? t.getAmount().negate() : t.getAmount();
+                String typeLabel = isExpense ? "EXPENSE" : "INCOME";
+
                 return String.format("[%s] %s: %s %s (%s)",
                                 t.getDate().format(formatter),
-                                t.getDescription(),
-                                t.getAmount(),
-                                t.getCurrency() != null ? t.getCurrency() : "USD", // Default to USD or make dynamic
-                                type);
+                                t.getDescription() != null ? t.getDescription() : "No description",
+                                amount,
+                                t.getCurrency() != null ? t.getCurrency() : "USD",
+                                typeLabel);
+        }
+
+        // ─── Short-form insight helpers ───────────────────────────────
+
+        private String callGemini(String systemPrompt, String userContent) {
+                GeminiDTOs.GeminiRequest request = GeminiDTOs.GeminiRequest.builder()
+                                .systemInstruction(GeminiDTOs.Content.builder()
+                                                .parts(Collections.singletonList(GeminiDTOs.Part.builder()
+                                                                .text(systemPrompt).build()))
+                                                .build())
+                                .contents(Collections.singletonList(GeminiDTOs.Content.builder()
+                                                .role("user")
+                                                .parts(Collections.singletonList(GeminiDTOs.Part.builder()
+                                                                .text(userContent).build()))
+                                                .build()))
+                                .generationConfig(GeminiDTOs.GenerationConfig.builder()
+                                                .maxOutputTokens(150)
+                                                .temperature(0.5)
+                                                .build())
+                                .build();
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<GeminiDTOs.GeminiRequest> entity = new HttpEntity<>(request, headers);
+
+                try {
+                        ResponseEntity<GeminiDTOs.GeminiResponse> response = restTemplate.postForEntity(
+                                        GEMINI_API_URL + apiKey, entity, GeminiDTOs.GeminiResponse.class);
+                        GeminiDTOs.GeminiResponse body = response.getBody();
+                        if (body != null && body.getCandidates() != null && !body.getCandidates().isEmpty()) {
+                                GeminiDTOs.Candidate c = body.getCandidates().get(0);
+                                if (c.getContent() != null && c.getContent().getParts() != null
+                                                && !c.getContent().getParts().isEmpty()) {
+                                        return c.getContent().getParts().get(0).getText();
+                                }
+                        }
+                } catch (Exception e) {
+                        log.error("Gemini API error", e);
+                }
+                return "Unable to generate insight at this time.";
+        }
+
+        private static final String SHORT_SYSTEM = "You are a concise financial advisor. Reply in 1-2 short sentences, max 200 characters. Specific and actionable. IMPORTANT: Negative amounts are expenses, positive are income.";
+
+        public String analyzeTransaction(Transaction t) {
+                String data = formatTransaction(t);
+                return callGemini(SHORT_SYSTEM,
+                                "Give a brief insight on this single transaction:\n" + data);
+        }
+
+        public String analyzeCategory(String category, List<Transaction> txns) {
+                if (txns == null || txns.isEmpty())
+                        return "No transactions in this category.";
+                String data = txns.stream().limit(20).map(this::formatTransaction)
+                                .collect(Collectors.joining("\n"));
+                return callGemini(SHORT_SYSTEM,
+                                "Give a brief insight on spending in category \"" + category + "\":\n" + data);
+        }
+
+        public String analyzePeriod(String period, String periodLabel, List<Transaction> txns) {
+                if (txns == null || txns.isEmpty())
+                        return "No transactions in this period.";
+                String data = txns.stream().limit(30).map(this::formatTransaction)
+                                .collect(Collectors.joining("\n"));
+                return callGemini(SHORT_SYSTEM,
+                                "Give a brief insight on all spending during " + period + " (" + periodLabel + "):\n"
+                                                + data);
         }
 }

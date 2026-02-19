@@ -19,10 +19,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByUserIdAndDateBetween(Long userId, LocalDateTime start, LocalDateTime end);
 
+    List<Transaction> findByUserIdAndCategory(Long userId, String category);
+
     boolean existsByExternalId(String externalId);
 
     List<Transaction> findByExternalIdIn(List<String> externalIds);
 
     @Query("SELECT COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE -t.amount END), 0) FROM Transaction t WHERE t.user.id = :userId")
     BigDecimal calculateBalanceByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.user.id = :userId")
+    long countByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.user.id = :userId AND t.type = 'INCOME'")
+    BigDecimal sumIncomeByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.user.id = :userId AND t.type = 'EXPENSE'")
+    BigDecimal sumExpenseByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t")
+    BigDecimal sumAllAmounts();
+
+    @Query("SELECT COUNT(DISTINCT t.user.id) FROM Transaction t WHERE t.date >= :since")
+    long countActiveUsersSince(@Param("since") LocalDateTime since);
 }

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -63,18 +64,21 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<java.util.List<UserResponseDto>> getAllUsers() {
         log.info("GET /api/users — listing all users");
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> toggleUserStatus(@PathVariable Long id) {
         log.info("PUT /api/users/{}/status — toggling block status", id);
         return ResponseEntity.ok(userService.toggleUserBlockStatus(id));
     }
 
     @PutMapping("/{id}/details")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> updateUserDetails(@PathVariable Long id,
             @RequestBody UserUpdateDto updateDto) {
         log.info("PUT /api/users/{}/details — admin update, username={}", id, updateDto.getUsername());
