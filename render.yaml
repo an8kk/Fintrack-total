@@ -1,0 +1,55 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: fintrack-backend
+    runtime: docker
+    env: docker
+    dockerContext: backend
+    dockerfilePath: backend/dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: fintrack-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: fintrack-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: fintrack-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SALTEDGE_APP_ID
+        sync: false
+      - key: SALTEDGE_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # Admin Panel Static Site
+  - type: static
+    name: fintrack-admin
+    buildCommand: cd admin-panel/fintrack-admin && npm install && npm run build
+    staticPublishDir: admin-panel/fintrack-admin/dist
+    plan: free
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: fintrack-backend
+          property: host
+        suffix: /api # Host is just the domain, we need the /api suffix
+
+databases:
+  - name: fintrack-db
+    databaseName: fintrack
+    user: postgres
+    plan: free
