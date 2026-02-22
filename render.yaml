@@ -36,7 +36,6 @@ services:
     name: fintrack-admin
     buildCommand: cd admin-panel/fintrack-admin && npm install && npm run build
     staticPublishPath: admin-panel/fintrack-admin/dist
-    plan: free
     routes:
       - type: rewrite
         source: /*
