@@ -10,7 +10,11 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
-# Optimize for Render Free Tier (512MB RAM):
-# -Xmx352m: Limit heap to 352MB to leave room for stack and non-heap memory
-# --server.port: Bind to the PORT environment variable provided by Render
-ENTRYPOINT ["java", "-Xmx352m", "-jar", "app.jar", "--server.port=${PORT:8080}"]
+
+# Use shell form to ensure environment variables are expanded.
+# We pass DB config as CLI args to ensure they override any auto-injected ones.
+ENTRYPOINT exec java -Xmx384m -jar app.jar \
+    --server.port=${PORT:-8080} \
+    --spring.datasource.url=jdbc:postgresql://${FINTRACK_DB_HOST}:${FINTRACK_DB_PORT}/${FINTRACK_DB_NAME} \
+    --spring.datasource.username=${FINTRACK_DB_USER} \
+    --spring.datasource.password=${FINTRACK_DB_PASS}
