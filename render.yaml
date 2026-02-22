@@ -9,15 +9,23 @@ services:
     plan: free
     healthCheckPath: /api/health
     envVars:
-      - key: SPRING_DATASOURCE_URL
+      - key: DB_HOST
         fromDatabase:
           name: fintrack-db
-          property: jdbcInternalConnectionString
-      - key: SPRING_DATASOURCE_USERNAME
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: fintrack-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: fintrack-db
+          property: database
+      - key: DB_USERNAME
         fromDatabase:
           name: fintrack-db
           property: user
-      - key: SPRING_DATASOURCE_PASSWORD
+      - key: DB_PASSWORD
         fromDatabase:
           name: fintrack-db
           property: password
