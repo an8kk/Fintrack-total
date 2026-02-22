@@ -1,0 +1,1 @@
+export { AiInsights } from "./show";
