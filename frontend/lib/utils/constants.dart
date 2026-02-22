@@ -12,4 +12,4 @@ class AppColors {
 }
 
 // Backend URL
-const String baseUrl = 'http://localhost:8080/api/transactions';
+const String baseUrl = 'https://fintrack-backend-b56q.onrender.com/api/transactions';
