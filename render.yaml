@@ -12,7 +12,7 @@ services:
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
           name: fintrack-db
-          property: connectionString
+          property: jdbcInternalConnectionString
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: fintrack-db
