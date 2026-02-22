@@ -52,5 +52,4 @@ services:
 databases:
   - name: fintrack-db
     databaseName: fintrack
-    user: postgres
     plan: free
