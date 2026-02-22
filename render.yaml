@@ -54,7 +54,7 @@ services:
           type: web
           name: fintrack-backend
           property: host
-        suffix: /api # Host is just the domain, we need the /api suffix
+        suffix: .onrender.com/api # Append external domain and API path
 
 databases:
   - name: fintrack-db
