@@ -31,7 +31,8 @@ services:
         sync: false
 
   # Admin Panel Static Site
-  - type: static
+  - type: web
+    runtime: static
     name: fintrack-admin
     buildCommand: cd admin-panel/fintrack-admin && npm install && npm run build
     staticPublishDir: admin-panel/fintrack-admin/dist
