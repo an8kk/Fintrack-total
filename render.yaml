@@ -9,23 +9,23 @@ services:
     plan: free
     healthCheckPath: /api/health
     envVars:
-      - key: DB_HOST
+      - key: FINTRACK_DB_HOST
         fromDatabase:
           name: fintrack-db
           property: host
-      - key: DB_PORT
+      - key: FINTRACK_DB_PORT
         fromDatabase:
           name: fintrack-db
           property: port
-      - key: DB_NAME
+      - key: FINTRACK_DB_NAME
         fromDatabase:
           name: fintrack-db
           property: database
-      - key: DB_USERNAME
+      - key: FINTRACK_DB_USER
         fromDatabase:
           name: fintrack-db
           property: user
-      - key: DB_PASSWORD
+      - key: FINTRACK_DB_PASS
         fromDatabase:
           name: fintrack-db
           property: password
