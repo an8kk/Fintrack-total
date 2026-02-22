@@ -1,6 +1,9 @@
 const getApiUrl = () => {
     const envoyUrl = import.meta.env.VITE_API_URL;
-    if (!envoyUrl) return "http://localhost:8080/api";
+    if (!envoyUrl || envoyUrl === "fintrack-backend-b56q") {
+        // Fallback to the known live URL if the env var is missing or truncated by Render
+        return "https://fintrack-backend-b56q.onrender.com/api";
+    }
     if (envoyUrl.startsWith("http")) return envoyUrl;
     return `https://${envoyUrl}`;
 };

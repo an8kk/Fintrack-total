@@ -50,11 +50,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: fintrack-backend
-          property: host
-        suffix: .onrender.com/api # Append external domain and API path
+        value: https://fintrack-backend-b56q.onrender.com/api
 
 databases:
   - name: fintrack-db
