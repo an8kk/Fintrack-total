@@ -18,10 +18,10 @@ public class GeminiDTOs {
         @JsonProperty("contents")
         private List<Content> contents;
 
-        @JsonProperty("system_instruction")
+        @JsonProperty("systemInstruction")
         private Content systemInstruction;
 
-        @JsonProperty("generation_config")
+        @JsonProperty("generationConfig")
         private GenerationConfig generationConfig;
     }
 
@@ -30,7 +30,7 @@ public class GeminiDTOs {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class GenerationConfig {
-        @JsonProperty("max_output_tokens")
+        @JsonProperty("maxOutputTokens")
         private Integer maxOutputTokens;
         @JsonProperty("temperature")
         private Double temperature;
