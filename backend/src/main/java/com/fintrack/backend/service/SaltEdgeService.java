@@ -222,31 +222,38 @@ public class SaltEdgeService {
     public void importDataForCustomer(User user) {
         String customerId = user.getSaltEdgeCustomerId();
         if (customerId == null || customerId.isEmpty()) {
+            log.warn("Cannot import Salt Edge data: Customer ID is missing for userId={}", user.getId());
             return;
         }
 
         String url = BASE_URL + "/connections?customer_id=" + customerId;
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("App-id", appId);
-        headers.set("Secret", secret);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        HttpHeaders headers = buildHeaders();
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         try {
+            log.info("Checking for Salt Edge connections for customerId={}", customerId);
             ResponseEntity<SaltEdgeDTOs.SaltEdgeConnectionResponse> response = restTemplate.exchange(
                     url, HttpMethod.GET, entity, SaltEdgeDTOs.SaltEdgeConnectionResponse.class);
 
             SaltEdgeDTOs.SaltEdgeConnectionResponse connBody = response.getBody();
-            if (connBody != null && connBody.getData() != null) {
+            if (connBody != null && connBody.getData() != null && !connBody.getData().isEmpty()) {
+                // Discovery: if we don't have a connectionId saved, take the first active one
+                if (user.getSaltEdgeConnectionId() == null || user.getSaltEdgeConnectionId().isBlank()) {
+                    String discoveredId = connBody.getData().get(0).getId();
+                    user.setSaltEdgeConnectionId(discoveredId);
+                    userRepository.save(user);
+                    log.info("Discovered and saved connection_id '{}' for user '{}'", discoveredId, user.getEmail());
+                }
+
                 for (SaltEdgeDTOs.ConnectionData connection : connBody.getData()) {
                     log.info("Fetching transactions for connection: {}", connection.getId());
                     fetchTransactions(connection.getId(), user);
                 }
+            } else {
+                log.info("No connections found for Salt Edge customerId={}", customerId);
             }
         } catch (Exception e) {
             log.error("Error importing data for customer: {}", customerId, e);
-            // Don't throw exception to avoid blocking registration if sync fails
         }
     }
 

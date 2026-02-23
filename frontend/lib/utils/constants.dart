@@ -13,9 +13,7 @@ class AppColors {
 }
 
 // Backend URL
-const String baseUrl = kReleaseMode 
-    ? 'https://fintrack-backend-b56q.onrender.com/api/transactions' 
-    : 'http://localhost:8080/api/transactions';
+const String baseUrl ='https://fintrack-backend-b56q.onrender.com/api';
 
 class CategoryUtils {
   static IconData getIconData(String name) {

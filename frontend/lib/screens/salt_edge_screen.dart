@@ -98,11 +98,42 @@ class _SaltEdgeScreenState extends State<SaltEdgeScreen> {
             backgroundColor: Colors.green,
           ),
         );
+        // Refresh status after sync
+        _checkConnectionStatus();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Sync failed: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
+  }
+
+  Future<void> _discoverAndSync() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.token == null) return;
+
+    setState(() => _isSyncing = true);
+    try {
+      // Use the import endpoint which now handles discovery
+      await _apiService.importSaltEdgeTransactions(authProvider.token!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Discovery and sync completed'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Refresh status to see if we are now connected
+        _checkConnectionStatus();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Discovery failed: $e"), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -122,7 +153,7 @@ class _SaltEdgeScreenState extends State<SaltEdgeScreen> {
         foregroundColor: Colors.white,
       ),
       body: RefreshIndicator(
-        onRefresh: _isConnected ? _syncTransactions : _checkConnectionStatus,
+        onRefresh: _isConnected ? _syncTransactions : _discoverAndSync,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(24.0),
@@ -239,7 +270,7 @@ class _SaltEdgeScreenState extends State<SaltEdgeScreen> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _connectBank,
+                    onPressed: _isLoading || _isSyncing ? null : _connectBank,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -253,6 +284,32 @@ class _SaltEdgeScreenState extends State<SaltEdgeScreen> {
                           ),
                   ),
                 ),
+                if (_customerIdController.text.isNotEmpty && !_isConnected) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton.icon(
+                      onPressed: _isSyncing ? null : _discoverAndSync,
+                      icon: _isSyncing
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.search),
+                      label: Text(
+                        _isSyncing ? 'Discovering...' : 'Discover Connections',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ],
           ),
