@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AppColors {
@@ -12,4 +13,39 @@ class AppColors {
 }
 
 // Backend URL
-const String baseUrl = 'https://fintrack-backend-b56q.onrender.com/api/transactions';
+const String baseUrl = kReleaseMode 
+    ? 'https://fintrack-backend-b56q.onrender.com/api/transactions' 
+    : 'http://localhost:8080/api/transactions';
+
+class CategoryUtils {
+  static IconData getIconData(String name) {
+    switch (name.toLowerCase()) {
+      case 'food':
+      case 'fastfood':
+        return Icons.fastfood;
+      case 'transport':
+      case 'directions_bus':
+        return Icons.directions_bus;
+      case 'housing':
+      case 'home':
+        return Icons.home;
+      case 'salary':
+      case 'attach_money':
+        return Icons.attach_money;
+      case 'shopping':
+      case 'shopping_cart':
+        return Icons.shopping_cart;
+      case 'health':
+      case 'medical_services':
+        return Icons.medical_services;
+      case 'entertainment':
+      case 'movie':
+        return Icons.movie;
+      case 'education':
+      case 'school':
+        return Icons.school;
+      default:
+        return Icons.category;
+    }
+  }
+}
