@@ -336,6 +336,16 @@ class ApiService {
     }
   }
 
+  Future<void> importSaltEdgeTransactions(String token) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/saltedge/import'),
+      headers: {"Authorization": "Bearer $token"},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to import Salt Edge transactions');
+    }
+  }
+
   Future<List<TransactionModel>> getSaltEdgeTransactions(String connectionId, String token) async {
     final response = await http.get(
       Uri.parse('$baseUrl/saltedge/transactions?connection_id=$connectionId'),
