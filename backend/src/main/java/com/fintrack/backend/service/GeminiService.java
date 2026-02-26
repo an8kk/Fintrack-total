@@ -28,7 +28,7 @@ public class GeminiService {
         @Value("${gemini.api-key}")
         private String apiKey;
 
-        private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=";
+        private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
 
         public String analyzeSpending(List<Transaction> transactions) {
                 if (transactions == null || transactions.isEmpty()) {
@@ -45,15 +45,11 @@ public class GeminiService {
                 // Prompt is constructed within the request object directly
 
                 GeminiDTOs.GeminiRequest request = GeminiDTOs.GeminiRequest.builder()
-                                .systemInstruction(GeminiDTOs.Content.builder()
-                                                .parts(Collections.singletonList(GeminiDTOs.Part.builder()
-                                                                .text("You are a senior financial advisor. Your tone is professional and direct. Analyze the provided transactions for bad spending habits and savings opportunities. Negative amounts are expenses, positive are income. Each transaction is labeled with its type for clarity. Respect the currency provided (e.g., KZT, USD, EUR).")
-                                                                .build()))
-                                                .build())
                                 .contents(Collections.singletonList(GeminiDTOs.Content.builder()
                                                 .role("user")
                                                 .parts(Collections.singletonList(GeminiDTOs.Part.builder()
-                                                                .text(formattedTransactions)
+                                                                .text("SYSTEM: You are a senior financial advisor. Your tone is professional and direct. Analyze the provided transactions for bad spending habits and savings opportunities. Negative amounts are expenses, positive are income. Each transaction is labeled with its type for clarity. Respect the currency provided (e.g., KZT, USD, EUR).\n\nTRANSACTIONS:\n"
+                                                                                + formattedTransactions)
                                                                 .build()))
                                                 .build()))
                                 .generationConfig(GeminiDTOs.GenerationConfig.builder()
@@ -106,14 +102,12 @@ public class GeminiService {
 
         private String callGemini(String systemPrompt, String userContent) {
                 GeminiDTOs.GeminiRequest request = GeminiDTOs.GeminiRequest.builder()
-                                .systemInstruction(GeminiDTOs.Content.builder()
-                                                .parts(Collections.singletonList(GeminiDTOs.Part.builder()
-                                                                .text(systemPrompt).build()))
-                                                .build())
                                 .contents(Collections.singletonList(GeminiDTOs.Content.builder()
                                                 .role("user")
                                                 .parts(Collections.singletonList(GeminiDTOs.Part.builder()
-                                                                .text(userContent).build()))
+                                                                .text("SYSTEM: " + systemPrompt + "\n\nDATA:\n"
+                                                                                + userContent)
+                                                                .build()))
                                                 .build()))
                                 .generationConfig(GeminiDTOs.GenerationConfig.builder()
                                                 .maxOutputTokens(150)

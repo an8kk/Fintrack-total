@@ -10,6 +10,7 @@ class AuthProvider with ChangeNotifier {
   String? _username;
   String? _email;
   String? _role;
+  bool _isPremium = false;
   bool _isLoading = false;
   String? _error;
 
@@ -20,6 +21,7 @@ class AuthProvider with ChangeNotifier {
   String? get role => _role;
   bool get isLoading => _isLoading;
   bool get isAdmin => _role == 'ADMIN';
+  bool get isPremium => _isPremium;
   String? get error => _error;
   bool get isAuthenticated => _token != null;
 
@@ -59,6 +61,7 @@ class AuthProvider with ChangeNotifier {
       _currentUserId = data['userId'];
       _username = data['username'];
       _role = data['role'];
+      _isPremium = data['isPremium'] ?? false;
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', _token!);
@@ -82,6 +85,7 @@ class AuthProvider with ChangeNotifier {
       _username = data['username'];
       _email = data['email'];
       _role = data['role'];
+      _isPremium = data['isPremium'] ?? false;
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -154,11 +158,29 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  Future<void> upgradeToPremium(String cardNumber) async {
+    if (_token == null) return;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final updatedData = await _apiService.upgradeToPremium(cardNumber, _token!);
+      _isPremium = updatedData['isPremium'] ?? true;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> logout() async {
     _token = null;
     _currentUserId = null;
     _username = null;
     _email = null;
+    _isPremium = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     notifyListeners();

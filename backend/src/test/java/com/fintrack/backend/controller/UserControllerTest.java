@@ -42,6 +42,12 @@ class UserControllerTest {
         @MockBean
         private JwtUtils jwtUtils;
 
+        @MockBean
+        private com.fintrack.backend.repository.TransactionRepository transactionRepository;
+
+        @MockBean
+        private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
         @Autowired
         private ObjectMapper objectMapper;
 

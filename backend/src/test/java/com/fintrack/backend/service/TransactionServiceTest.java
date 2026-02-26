@@ -54,6 +54,9 @@ class TransactionServiceTest {
                 .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(transactionRepository.calculateBalanceByUserId(1L))
+                .thenReturn(new BigDecimal("1000")) // First call for validation
+                .thenReturn(new BigDecimal("1500")); // Second call for final sync
         when(transactionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Transaction result = transactionService.saveTransaction(1L, tx);
@@ -71,6 +74,9 @@ class TransactionServiceTest {
                 .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(transactionRepository.calculateBalanceByUserId(1L))
+                .thenReturn(new BigDecimal("1000")) // First call for validation
+                .thenReturn(new BigDecimal("700")); // Second call for final sync
         when(transactionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         transactionService.saveTransaction(1L, tx);
@@ -86,6 +92,7 @@ class TransactionServiceTest {
                 .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(transactionRepository.calculateBalanceByUserId(1L)).thenReturn(new BigDecimal("1000"));
 
         assertThrows(InsufficientBalanceException.class,
                 () -> transactionService.saveTransaction(1L, tx));
@@ -109,6 +116,7 @@ class TransactionServiceTest {
                 .build();
 
         when(transactionRepository.findById(10L)).thenReturn(Optional.of(tx));
+        when(transactionRepository.calculateBalanceByUserId(1L)).thenReturn(new BigDecimal("1200"));
 
         transactionService.deleteTransaction(10L);
 

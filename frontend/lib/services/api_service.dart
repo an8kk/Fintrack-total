@@ -459,4 +459,21 @@ class ApiService {
       throw Exception('Failed to get period insight');
     }
   }
+
+  // --- Premium Module ---
+  Future<Map<String, dynamic>> upgradeToPremium(String cardNumber, String token) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/users/upgrade'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token"
+      },
+      body: jsonEncode({"cardNumber": cardNumber}),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to upgrade to premium');
+    }
+  }
 }

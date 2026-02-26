@@ -18,5 +18,6 @@ public class UserDetailDto {
     private long transactionCount;
     private BigDecimal totalIncome;
     private BigDecimal totalExpense;
+    private boolean isPremium;
     private LocalDateTime createdAt;
 }

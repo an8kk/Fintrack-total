@@ -7,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../utils/constants.dart';
 import 'options_screen.dart';
 import 'admin_dashboard_screen.dart';
+import 'premium_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -110,17 +111,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           backgroundColor: Colors.white24,
                           child: Icon(Icons.person,
                               size: 65, color: Colors.white)),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                              color: Colors.orange, shape: BoxShape.circle),
-                          child: const Icon(Icons.star,
-                              color: Colors.white, size: 20),
-                        ),
-                      )
+                      if (provider.isPremium)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                                color: Colors.amber[700], 
+                                borderRadius: BorderRadius.circular(12)),
+                            child: const Text('PRO',
+                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                          ),
+                        )
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -224,6 +227,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   
+                  if (!provider.isPremium) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PremiumScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.workspace_premium, size: 20),
+                        label: const Text('Upgrade to Premium'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber[700],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                           shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ],
+
                   if (provider.isAdmin) ...[
                     const SizedBox(height: 12),
                     SizedBox(

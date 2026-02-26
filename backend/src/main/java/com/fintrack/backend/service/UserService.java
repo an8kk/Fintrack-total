@@ -106,6 +106,26 @@ public class UserService {
         return mapToDto(user);
     }
 
+    @Transactional
+    public UserResponseDto upgradeToPremium(Long userId, String cardNumber) {
+        log.info("Processing Premium upgrade for User ID: {}", userId);
+
+        // Mock validation for the presentation:
+        if (!"4400430296924001".equals(cardNumber)) {
+            log.warn("Premium upgrade failed: Invalid mock card number for User ID: {}", userId);
+            throw new IllegalArgumentException("Invalid card number. Please use 4400430296924001.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+
+        user.setPremium(true);
+        User savedUser = userRepository.save(user);
+
+        log.info("User ID {} upgraded to Premium successfully", userId);
+        return mapToDto(savedUser);
+    }
+
     private UserResponseDto mapToDto(User user) {
         BigDecimal calculatedBalance = transactionRepository.calculateBalanceByUserId(user.getId());
         return UserResponseDto.builder()
@@ -115,6 +135,7 @@ public class UserService {
                 .balance(calculatedBalance)
                 .role(user.getRole().name())
                 .isBlocked(user.isBlocked())
+                .isPremium(user.isPremium())
                 .build();
     }
 }

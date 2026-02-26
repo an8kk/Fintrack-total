@@ -5,6 +5,7 @@ import com.fintrack.backend.dto.UserResponseDto;
 import com.fintrack.backend.dto.UserUpdateDto;
 import com.fintrack.backend.entity.User;
 import com.fintrack.backend.exception.ResourceNotFoundException;
+import com.fintrack.backend.repository.TransactionRepository;
 import com.fintrack.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,8 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private TransactionRepository transactionRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
 
@@ -52,6 +55,7 @@ class UserServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(userRepository.save(any())).thenReturn(testUser);
+        when(transactionRepository.calculateBalanceByUserId(1L)).thenReturn(new BigDecimal("500"));
 
         UserResponseDto result = userService.updateUser(1L, dto);
 
@@ -99,6 +103,7 @@ class UserServiceTest {
     @Test
     void getUserProfile_success() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(transactionRepository.calculateBalanceByUserId(1L)).thenReturn(new BigDecimal("500"));
 
         UserResponseDto result = userService.getUserProfile(1L);
 
