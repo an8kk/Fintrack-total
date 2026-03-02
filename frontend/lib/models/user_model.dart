@@ -4,7 +4,6 @@ class UserModel {
   final String email;
   final String? role;
   final bool isBlocked;
-  final bool isPremium;
   final double balance; // Added balance
 
   UserModel({
@@ -13,7 +12,6 @@ class UserModel {
     required this.email,
     this.role,
     this.isBlocked = false,
-    this.isPremium = false,
     this.balance = 0.0,
   });
 
@@ -24,7 +22,6 @@ class UserModel {
       email: json['email'],
       role: json['role'],
       isBlocked: json['isBlocked'] ?? false,
-      isPremium: json['isPremium'] ?? false,
       balance: (json['balance'] ?? 0).toDouble(),
     );
   }
@@ -36,7 +33,6 @@ class UserModel {
       'email': email,
       'role': role,
       'isBlocked': isBlocked,
-      'isPremium': isPremium,
       'balance': balance,
     };
   }

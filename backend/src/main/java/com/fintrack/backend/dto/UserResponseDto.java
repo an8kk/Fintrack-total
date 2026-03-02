@@ -13,6 +13,5 @@ public class UserResponseDto {
     private BigDecimal balance;
     private String role;
     private boolean isBlocked;
-    private boolean isPremium;
     // NO PASSWORD HERE!
 }

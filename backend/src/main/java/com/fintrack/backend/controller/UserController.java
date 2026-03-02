@@ -36,8 +36,7 @@ public class UserController {
                 userDto.getUsername(),
                 userDto.getEmail(),
                 userDto.getRole(),
-                userDto.isBlocked(),
-                userDto.isPremium()));
+                userDto.isBlocked()));
     }
 
     @PutMapping("/{id}/password")
@@ -55,15 +54,7 @@ public class UserController {
                 userDto.getUsername(),
                 userDto.getEmail(),
                 userDto.getRole(),
-                userDto.isBlocked(),
-                userDto.isPremium()));
-    }
-
-    @PostMapping("/upgrade")
-    public ResponseEntity<UserResponseDto> upgradeToPremium(@RequestAttribute("userId") Long userId,
-            @RequestBody UpgradeRequestDto requestDto) {
-        log.info("POST /api/users/upgrade — user {}, card: {}", userId, requestDto.getCardNumber());
-        return ResponseEntity.ok(userService.upgradeToPremium(userId, requestDto.getCardNumber()));
+                userDto.isBlocked()));
     }
 
     @GetMapping("/{id}")

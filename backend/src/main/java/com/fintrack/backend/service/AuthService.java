@@ -81,7 +81,7 @@ public class AuthService {
         log.debug("JWT Token generated.");
 
         return new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail(), user.getRole().name(),
-                user.isBlocked(), user.isPremium());
+                user.isBlocked());
     }
 
     public String requestPasswordReset(String email) {

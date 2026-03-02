@@ -41,8 +41,6 @@ public class User {
     @Column(name = "salt_edge_connection_id")
     private String saltEdgeConnectionId;
 
-    private boolean isPremium = false;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
 
